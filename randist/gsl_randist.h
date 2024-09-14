@@ -82,6 +82,11 @@ double gsl_ran_gaussian_ratio_method (const gsl_rng * r, const double sigma);
 double gsl_ran_gaussian_ziggurat (const gsl_rng * r, const double sigma);
 double gsl_ran_gaussian_pdf (const double x, const double sigma);
 
+double gsl_ran_gaussian_mixture (const gsl_rng * r, const size_t K, const double w[], const double mu[], const double sigma[]);
+double gsl_ran_gaussian_mixture_ratio_method (const gsl_rng * r, const size_t K, const double w[], const double mu[], const double sigma[]);
+double gsl_ran_gaussian_mixture_ziggurat (const gsl_rng * r, const size_t K, const double w[], const double mu[], const double sigma[]);
+double gsl_ran_gaussian_mixture_pdf (const double x, const size_t K, const double w[], const double mu[], const double sigma[]);
+
 double gsl_ran_ugaussian (const gsl_rng * r);
 double gsl_ran_ugaussian_ratio_method (const gsl_rng * r);
 double gsl_ran_ugaussian_pdf (const double x);
