@@ -2763,6 +2763,254 @@ WRAP(gsl_ran_gaussian_tail_pdf, ARGS3)
 WRAP(gsl_ran_ugaussian_tail, RNG_ARGS1)
 WRAP(gsl_ran_ugaussian_tail_pdf, ARGS2)
 
+static double amplgsl_ran_gaussian_mixture(arglist* al) {
+  int K = al->nr / 3;
+  if (!check_args(al))
+    return 0;
+  if (al->derivs)
+    deriv_error(al, DERIVS_NOT_PROVIDED);
+  return check_result(al, gsl_ran_gaussian_mixture(rng, K, al->ra, al->ra + K, al->ra + 2 * K));
+}
+
+static double amplgsl_ran_gaussian_mixture_pdf(arglist* al) {
+  int K = (al->nr - 1) / 3;
+  double x = al->ra[0];
+  double* w = al->ra + 1;
+  double* mu = w + K;
+  double* sigma = mu + K;
+  double* sigma2;
+  double* z;
+  double* z2;
+  double* pdf;
+  double* wpdf;
+  double swpdf = 0.0;
+  int i, r, c;
+
+  sigma2 = (double*)malloc(K * sizeof(double));
+  z = (double*)malloc(K * sizeof(double));
+  z2 = (double*)malloc(K * sizeof(double));
+  pdf = (double*)malloc(K * sizeof(double));
+  wpdf = (double*)malloc(K * sizeof(double));
+
+  for (i = 0; i < K; ++i) {
+    sigma2[i] = sigma[i] * sigma[i];
+    z[i] = (x - mu[i]) / sigma[i];
+    z2[i] = z[i] * z[i];
+    pdf[i] = 1.0 / (sqrt(2 * M_PI) * sigma[i]) * exp(-z2[i] / 2.0);
+    wpdf[i] = w[i] * pdf[i];
+    swpdf += wpdf[i];
+  }
+
+  if (al->derivs) {
+    if (!al->dig || !al->dig[0]) {
+      al->derivs[0] = 0.0;
+      for (i = 0; i < K; ++i) {
+        al->derivs[0] -= wpdf[i] * z[i] / sigma[i];  // w.r.t. x
+      }
+    }
+    for (i = 0; i < K; ++i) {
+      r = i + 1;
+      if (!al->dig || !al->dig[r])
+        al->derivs[r] = pdf[i];  // w.r.t. w[i]
+      r += K;
+      if (!al->dig || !al->dig[r])
+        al->derivs[r] = wpdf[i] * z[i] / sigma[i];  // w.r.t. mu[i]
+      r += K;
+      if (!al->dig || !al->dig[r])
+        al->derivs[r] = - wpdf[i] * (1.0 - z2[i]) / sigma[i];  // w.r.t. sigma[i]
+    }
+    if (al->hes) {
+      memset(al->hes, 0, sizeof(double) * (al->nr) * (al->nr + 1) / 2);
+      if (!al->dig || !al->dig[0]) {
+        for (i = 0; i < K; ++i) {
+          al->hes[0] -= wpdf[i] * (1.0 - z2[i]) / sigma2[i];  // w.r.t. x, x
+        }
+        for (i = 0; i < K; ++i) {
+          c = i + 1;
+          if (!al->dig || !al->dig[c])
+            al->hes[c * (c + 1) / 2] = - pdf[i] * z[i] / sigma[i];  // w.r.t. x, w[i]
+          c += K;
+          if (!al->dig || !al->dig[c])
+            al->hes[c * (c + 1) / 2] = wpdf[i] * (1.0 - z2[i]) / sigma2[i];  // w.r.t. x, mu[i]
+          c += K;
+          if (!al->dig || !al->dig[c])
+            al->hes[c * (c + 1) / 2] = wpdf[i] * z[i] * (3.0 - z2[i]) / sigma2[i];  // w.r.t. x, sigma[i]
+        }
+      }
+      for (i = 0; i < K; ++i) {
+        r = i + 1;
+        if (!al->dig || !al->dig[r]) {
+          c = r + K;
+          if (!al->dig || !al->dig[c])
+            al->hes[r + c * (c + 1) / 2] = pdf[i] * z[i] / sigma[i];  // w.r.t. w[i], mu[i]
+          c += K;
+          if (!al->dig || !al->dig[c])
+            al->hes[r + c * (c + 1) / 2] = - pdf[i] * (1.0 - z2[i]) / sigma[i];  // w.r.t. w[i], sigma[i]
+        }
+        r += K;
+        if (!al->dig || !al->dig[r]) {
+          al->hes[r + r * (r + 1) / 2] = - wpdf[i] * (1.0 - z2[i]) / sigma2[i];  // w.r.t. mu[i], mu[i]
+          c = r + K;
+          if (!al->dig || !al->dig[c])
+            al->hes[r + c * (c + 1) / 2] = - wpdf[i] * z[i] * (3.0 - z2[i]) / sigma2[i];  // w.r.t. mu[i], sigma[i]
+        }
+        r += K;
+        if (!al->dig || !al->dig[r]) {
+          al->hes[r + r * (r + 1) / 2] = wpdf[i] * (z2[i] * z2[i] - 5.0 * z2[i] + 2.0) / sigma2[i];  // w.r.t. sigma[i], sigma[i]
+        }
+      }
+    }
+  }
+  free(sigma2);
+  free(z);
+  free(z2);
+  free(pdf);
+  free(wpdf);
+  return check_result(al, swpdf);
+}
+
+static double amplgsl_ran_gaussian_mixture_ziggurat(arglist* al) {
+  int K = al->nr / 3;
+  if (!check_args(al))
+    return 0;
+  if (al->derivs)
+    deriv_error(al, DERIVS_NOT_PROVIDED);
+  return check_result(al, gsl_ran_gaussian_mixture_ziggurat(rng, K, al->ra, al->ra + K, al->ra + 2 * K));
+}
+
+static double amplgsl_ran_gaussian_mixture_ratio_method(arglist* al) {
+  int K = al->nr / 3;
+  if (!check_args(al))
+    return 0;
+  if (al->derivs)
+    deriv_error(al, DERIVS_NOT_PROVIDED);
+  return check_result(al, gsl_ran_gaussian_mixture_ratio_method(rng, K, al->ra, al->ra + K, al->ra + 2 * K));
+}
+
+static double amplgsl_cdf_gaussian_mixture_P(arglist* al) {
+  int K = (al->nr - 1) / 3;
+  double x = al->ra[0];
+  double* w = al->ra + 1;
+  double* mu = w + K;
+  double* sigma = mu + K;
+  double* z;
+  double* z2;
+  double* pdf;
+  double* wpdf;
+  double* cdf;
+  double swcdf = 0.0;
+  int i, r, c;
+
+  z = (double*)malloc(K * sizeof(double));
+  z2 = (double*)malloc(K * sizeof(double));
+  pdf = (double*)malloc(K * sizeof(double));
+  wpdf = (double*)malloc(K * sizeof(double));
+  cdf = (double*)malloc(K * sizeof(double));
+
+  for (i = 0; i < K; ++i) {
+    z[i] = (x - mu[i]) / sigma[i];
+    z2[i] = z[i] * z[i];
+    pdf[i] = 1.0 / (sqrt(2.0 * M_PI) * sigma[i]) * exp(-z2[i] / 2.0);
+    wpdf[i] = w[i] * pdf[i];
+    cdf[i] = gsl_cdf_ugaussian_P(z[i]);
+    swcdf += w[i] * cdf[i];
+  }
+
+  if (al->derivs) {
+    if (!al->dig || !al->dig[0]) {
+      al->derivs[0] = 0.0;
+      for (i = 0; i < K; ++i) {
+        al->derivs[0] += wpdf[i];  // w.r.t. x
+      }
+    }
+    for (i = 0; i < K; ++i) {
+      r = i + 1;
+      if (!al->dig || !al->dig[r])
+        al->derivs[r] = cdf[i];  // w.r.t. w[i]
+      r += K;
+      if (!al->dig || !al->dig[r])
+        al->derivs[r] = - wpdf[i];  // w.r.t. mu[i]
+      r += K;
+      if (!al->dig || !al->dig[r])
+        al->derivs[r] = - wpdf[i] * z[i];  // w.r.t. sigma[i]
+    }
+    if (al->hes) {
+      memset(al->hes, 0, sizeof(double) * (al->nr) * (al->nr + 1) / 2);
+      if (!al->dig || !al->dig[0]) {
+        for (i = 0; i < K; ++i) {
+          al->hes[0] -= wpdf[i] * z[i] / sigma[i];  // w.r.t. x, x
+        }
+        for (i = 0; i < K; ++i) {
+          c = i + 1;
+          if (!al->dig || !al->dig[c])
+            al->hes[c * (c + 1) / 2] = pdf[i];  // w.r.t. x, w[i]
+          c += K;
+          if (!al->dig || !al->dig[c])
+            al->hes[c * (c + 1) / 2] = wpdf[i] * z[i] / sigma[i];  // w.r.t. x, mu[i]
+          c += K;
+          if (!al->dig || !al->dig[c])
+            al->hes[c * (c + 1) / 2] = - wpdf[i] * (1.0 - z2[i]) / sigma[i];  // w.r.t. x, sigma[i]
+        }
+      }
+      for (i = 0; i < K; ++i) {
+        r = i + 1;
+        if (!al->dig || !al->dig[r]) {
+          c = r + K;
+          if (!al->dig || !al->dig[c])
+            al->hes[r + c * (c + 1) / 2] = - pdf[i];  // w.r.t. w[i], mu[i]
+          c += K;
+          if (!al->dig || !al->dig[c])
+            al->hes[r + c * (c + 1) / 2] = - pdf[i] * z[i];  // w.r.t. w[i], sigma[i]
+        }
+        r += K;
+        if (!al->dig || !al->dig[r]) {
+          al->hes[r + r * (r + 1) / 2] = - wpdf[i] * z[i] / sigma[i];  // w.r.t. mu[i], mu[i]
+          c = r + K;
+          if (!al->dig || !al->dig[c])
+            al->hes[r + c * (c + 1) / 2] = wpdf[i] * (1.0 - z2[i]) / sigma[i];  // w.r.t. mu[i], sigma[i]
+        }
+        r += K;
+        if (!al->dig || !al->dig[r]) {
+          al->hes[r + r * (r + 1) / 2] = wpdf[i] * z[i] * (2.0 - z2[i]) / sigma[i];  // w.r.t. sigma[i], sigma[i]
+        }
+      }
+    }
+  }
+  free(z);
+  free(z2);
+  free(pdf);
+  free(wpdf);
+  free(cdf);
+  return check_result(al, swcdf);
+}
+
+static double amplgsl_cdf_gaussian_mixture_Q(arglist* al) {
+    int K = (al->nr - 1) / 3;
+    if (!check_args(al))
+        return 0;
+    if (al->derivs)
+        deriv_error(al, DERIVS_NOT_PROVIDED);
+    return check_result(al, gsl_cdf_gaussian_mixture_Q(al->ra[0], K, al->ra + 1, al->ra + 1 + K, al->ra + 1 + 2 * K));
+}
+
+static double amplgsl_cdf_gaussian_mixture_Pinv(arglist* al) {
+    int K = (al->nr - 1) / 3;
+    if (!check_args(al))
+        return 0;
+    if (al->derivs)
+        deriv_error(al, DERIVS_NOT_PROVIDED);
+    return check_result(al, gsl_cdf_gaussian_mixture_Pinv(al->ra[0], K, al->ra + 1, al->ra + 1 + K, al->ra + 1 + 2 * K));
+}
+
+static double amplgsl_cdf_gaussian_mixture_Qinv(arglist* al) {
+    int K = (al->nr - 1) / 3;
+    if (!check_args(al))
+        return 0;
+    if (al->derivs)
+        deriv_error(al, DERIVS_NOT_PROVIDED);
+    return check_result(al, gsl_cdf_gaussian_mixture_Qinv(al->ra[0], K, al->ra + 1, al->ra + 1 + K, al->ra + 1 + 2 * K));
+}
+
 WRAP(gsl_ran_exponential, RNG_ARGS1)
 
 static double amplgsl_ran_exponential_pdf(arglist *al) {
@@ -5973,6 +6221,77 @@ extern "C" void funcadd_ASL(AmplExports *ae) {
    *  $P(x), Q(x)$ and their inverses for the unit Gaussian distribution.
    */
   ADDFUNC(gsl_cdf_ugaussian_Qinv, 1);
+
+  /**
+   * @file ran-gaussian-mixture
+   *
+   * The Gaussian Mixture Distribution
+   * =========================
+   *
+   * .. index:: Gaussian mixture distribution
+   */
+
+  /**
+   * .. function:: gsl_ran_gaussian_mixture(*ws, *mus, *sigmas)
+   *
+   *  This function returns a :index:`Gaussian mixture random variate`, with mean
+   *  zero and standard deviation ``sigma``. The probability distribution
+   *  for Gaussian mixture random variates is,
+   *
+   *  .. math::
+   *    p(x) dx = \sum\limits_{k = 1}^K {{w_k \over \sqrt{2 \pi \sigma_k^2}} \exp (-x^2 / 2\sigma_k^2) dx}
+   *
+   *  for $x$ in the range $-\infty$ to $+\infty$. This function uses the
+   *  Box-Muller algorithm which requires two calls to the random number
+   *  generator.
+   */
+  ADDFUNC_RANDOM(gsl_ran_gaussian_mixture, -4);
+
+  /**
+   * .. function:: gsl_ran_gaussian_mixture_pdf(x, *ws, *mus, *sigmas)
+   *
+   *  This function computes the probability density $p(x)$ at $x$ for a
+   *  Gaussian mixture distribution, using the formula
+   *  given above.
+   */
+  ADDFUNC(gsl_ran_gaussian_mixture_pdf, -5);
+
+  /**
+   * .. function:: gsl_ran_gaussian_mixture_ziggurat(*ws, *mus, *sigmas)
+   */
+  ADDFUNC_RANDOM(gsl_ran_gaussian_mixture_ziggurat, -4);
+
+  /**
+   * .. function:: gsl_ran_gaussian_mixture_ratio_method(*ws, *mus, *sigmas)
+   *
+   *  These functions compute a Gaussian mixture random variate using the alternative
+   *  Marsaglia-Tsang ziggurat and Kinderman-Monahan-Leva ratio methods.
+   *  The Ziggurat algorithm is the fastest available algorithm in most cases.
+   */
+  ADDFUNC_RANDOM(gsl_ran_gaussian_mixture_ratio_method, -4);
+
+  /**
+   * .. function:: gsl_cdf_gaussian_mixture_P(x, *ws, *mus, *sigmas)
+   */
+  ADDFUNC(gsl_cdf_gaussian_mixture_P, -5);
+
+  /**
+   * .. function:: gsl_cdf_gaussian_mixture_Q(x, *ws, *mus, *sigmas)
+   */
+  ADDFUNC(gsl_cdf_gaussian_mixture_Q, -5);
+
+  /**
+   * .. function:: gsl_cdf_gaussian_mixture_Pinv(P, *ws, *mus, *sigmas)
+   */
+  ADDFUNC(gsl_cdf_gaussian_mixture_Pinv, -5);
+
+  /**
+   * .. function:: gsl_cdf_gaussian_mixture_Qinv(Q, *ws, *mus, *sigmas)
+   *
+   *  These functions compute the cumulative distribution functions
+   *  $P(x), Q(x)$ and their inverses for the Gaussian mixture distribution.
+   */
+  ADDFUNC(gsl_cdf_gaussian_mixture_Qinv, -5);
 
   /**
    * @file ran-gaussian-tail
