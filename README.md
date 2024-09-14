@@ -76,7 +76,7 @@ Use GSL-GM in Python
 
 1. First, run `pip install pyomo` to install pyomo. Then, add the folder where `amplgsl.dll` is located to Environment Variable `PATH`.
 
-2. To calculate the value, first-order derivatives, second-order derivatives of a given Gaussian Mixture CDF or PDF, or the value of inverse Gaussian Mixture CDF, we can use the following code:
+2. For calculating the value, first-order derivatives, second-order derivatives of a given Gaussian Mixture CDF or PDF, or the value of inverse Gaussian Mixture CDF, the following code can be used as an example:
 
    ```
    import pyomo.core.base.external as external
@@ -102,7 +102,7 @@ Use GSL-GM in Python
 
    Here, `w`, `mu`, `sigma` can be also 1-D numpy arrays. `fgh=0` means that only function value is returned, `fgh=2` means that function value, first derivatives, and hessian matrix are returned, `fixed` indicates if the corresponding argument value is fixed.
 
-3. To model Gaussian Mixture CDF or PDF in optimization problems and solve it via NLP or MINLP solvers, we can use the following code:
+3. For modeling Gaussian Mixture CDF or PDF in optimization problems and solve it via NLP or MINLP solvers, the following code can be used as an example:
 
    ```
    import pyomo.environ as pyo
