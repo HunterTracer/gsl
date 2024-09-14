@@ -20,7 +20,7 @@ Build with AMPL bindings
 
 To build the AMPL bindings: 
 
-1. Make sure that the ASL submodule is initialized (in ```/ampl/thirdparty/asl```). Using the latest version of ASL is recommended. For latest ASL in your repository, just run `git submodule update --init --recursive` and `git submodule update --remote --merge`.
+1. Make sure that the ASL submodule is initialized (in ```/ampl/thirdparty/asl```). Using the latest version of ASL is recommended. For obtaining latest ASL, just clone this repository and then run `git submodule update --init --recursive` and `git submodule update --remote --merge`.
 
 2. Create a build directory and move there:
 
