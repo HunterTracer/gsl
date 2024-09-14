@@ -19,56 +19,47 @@ Build with AMPL bindings
 ------------------------
 
 To build the AMPL bindings: 
+
 1. Make sure that the ASL submodule is initialized (in ```/ampl/thirdparty/asl```). Using the latest version of ASL is recommended. For latest ASL in your repository, just run `git submodule update --init --recursive` and `git submodule update --remote --merge`.
 
 2. Create a build directory and move there:
+
    ```
    mkdir build
    cd build
    ```
 
 3. Initialize the build files with your desired [generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html), for example:
-   ```
-   cmake .. -G"Unix Makefiles"
-   ```
-   or
-   ```
-   cmake .. -G"Visual Studio 17 2022"
-   ```
+
+   `cmake .. -G"Unix Makefiles"` or `cmake .. -G"Visual Studio 17 2022"`
 
 4. Build the resulting build files accordingly, for example:
 
-   ```
-   make .
-   ```
-   or
-   ```
-   cmake --build . --target install --config "Release"
-   ```
+   `make .` or `cmake --build . --target install --config "Release"`
 
 
 C Function List
 ----------------------
 
-​	In the following part, the cumulative distribution function for the lower tail $P(x)$ is defined by the integral $P(x) = \int_{-\infty}^{x} dx' p(x')$, and gives the probability of a variate taking a value less than $x$.
+In the following part, the cumulative distribution function for the lower tail $P(x)$ is defined by the integral $P(x) = \int_{-\infty}^{x} dx' p(x')$, and gives the probability of a variate taking a value less than $x$.
 
-​	The cumulative distribution function for the upper tail $Q(x)$ is defined by the integral, $Q(x) = \int_{x}^{\infty} dx' p(x')$, and gives the probability of a variate taking a value greater than $x$.
+The cumulative distribution function for the upper tail $Q(x)$ is defined by the integral, $Q(x) = \int_{x}^{\infty} dx' p(x')$, and gives the probability of a variate taking a value greater than $x$.
 
-​	Here are the list of C functions.
+Here are the list of C functions.
 
 `double gsl_ran_gaussian_mixture (const gsl_rng * r, const size_t K, const double w[], const double mu[], const double sigma[])`
 
-​	This function return a Gaussian Mixture random variate, which has `K` mixture components with mixture weights `w`, means `mu` and standard deviations `sigma`. The probability distribution for Gaussian random variates is $p(x)dx = \sum\limits_{k=1}^K {w_k \frac{1}{\sqrt{2 \pi \sigma_k^2}}} \exp (-\frac{(x -\mu_k)^2} {2\sigma_k^2}) dx$.
+- This function return a Gaussian Mixture random variate, which has `K` mixture components with mixture weights `w`, means `mu` and standard deviations `sigma`. The probability distribution for Gaussian random variates is $p(x)dx = \sum\limits_{k=1}^K {w_k \frac{1}{\sqrt{2 \pi \sigma_k^2}}} \exp (-\frac{(x -\mu_k)^2} {2\sigma_k^2}) dx$.
 
 `double gsl_ran_gaussian_mixture_pdf (const double x, const size_t K, const double w[], const double mu[], const double sigma[])`
 
-​	This function computes the probability density $p(x)$ at $x$ for a Gaussian Mixture distribution, which has `K` mixture components with mixture weights `w`, means `mu` and standard deviations `sigma`, using the formula given above.
+- This function computes the probability density $p(x)$ at $x$ for a Gaussian Mixture distribution, which has `K` mixture components with mixture weights `w`, means `mu` and standard deviations `sigma`, using the formula given above.
 
 `double gsl_ran_gaussian_mixture_ziggurat (const gsl_rng * r, const size_t K, const double w[], const double mu[], const double sigma[])`
 
 `double gsl_ran_gaussian_mixture_ratio_method (const gsl_rng * r, const size_t K, const double w[], const double mu[], const double sigma[])`
 
-​	This function computes a Gaussian Mixture random variate using the alternative Marsaglia-Tsang ziggurat and Kinderman-Monahan-Leva ratio methods. The Ziggurat algorithm is the fastest available algorithm in most cases.
+- This function computes a Gaussian Mixture random variate using the alternative Marsaglia-Tsang ziggurat and Kinderman-Monahan-Leva ratio methods. The Ziggurat algorithm is the fastest available algorithm in most cases.
 
 `double gsl_cdf_gaussian_mixture_P(const double x, const size_t K, const double w[], const double mu[], const double sigma[])`
 
@@ -78,7 +69,7 @@ C Function List
 
 `double gsl_cdf_gaussian_mixture_Qinv(const double Q, const size_t K, const double w[], const double mu[], const double sigma[])`
 
-​	These functions compute the cumulative distribution functions $P(x), Q(x)$ and their inverses for the Gaussian Mixture distribution , which has `K` mixture components with mixture weights `w`, means `mu` and standard deviations `sigma`.
+- These functions compute the cumulative distribution functions $P(x), Q(x)$ and their inverses for the Gaussian Mixture distribution, which has `K` mixture components with mixture weights `w`, means `mu` and standard deviations `sigma`.
 
 Use GSL-GM in Python
 ----------------------
