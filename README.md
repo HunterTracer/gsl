@@ -125,10 +125,10 @@ Use GSL-GM in Python
    model.cons.add(model.gm_cdf(model.x, *w, *mu, *sigma) >= p)
    model.obj = pyo.Objective(rule=lambda m: m.x, sense=pyo.minimize)
    
-   # change executable to directory where ipopt.exe is
+   # change executable to the location where ipopt.exe is
    optimizer = pyo.SolverFactory("ipopt", executable=r"C:\Program Files (x86)\IpOpt\bin\ipopt.exe")
    optimizer.options["linear_solver"] = "ma97"
-   # change hsllib to directory where coinhsl.dll is
+   # change hsllib to the location where coinhsl.dll is
    optimizer.options["hsllib"] = r"C:\coinhsl\bin\coinhsl.dll"
    results = optimizer.solve(model, tee=True)
    assert (results.solver.status == pyo.SolverStatus.ok) and (
