@@ -46,6 +46,12 @@ double gsl_cdf_gaussian_Q (const double x, const double sigma);
 double gsl_cdf_gaussian_Pinv (const double P, const double sigma);
 double gsl_cdf_gaussian_Qinv (const double Q, const double sigma);
 
+double gsl_cdf_gaussian_mixture_P(const double x, const size_t K, const double w[], const double mu[], const double sigma[]);
+double gsl_cdf_gaussian_mixture_Q(const double x, const size_t K, const double w[], const double mu[], const double sigma[]);
+
+double gsl_cdf_gaussian_mixture_Pinv(const double P, const size_t K, const double w[], const double mu[], const double sigma[]);
+double gsl_cdf_gaussian_mixture_Qinv(const double Q, const size_t K, const double w[], const double mu[], const double sigma[]);
+
 double gsl_cdf_gamma_P (const double x, const double a, const double b);
 double gsl_cdf_gamma_Q (const double x, const double a, const double b);
 
