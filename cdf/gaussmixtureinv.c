@@ -18,8 +18,16 @@
  */
 
 /*
- * Computes the inverse guass mixture cumulative distribution function 
- * according to Newton method
+ * Computes the inverse guassian mixture cumulative distribution function 
+ * combining secant method and brent method.
+ * Considering random variable \xi that subjects to gaussian mixture distribution 
+ * $\xi \sim \sum\limits_{k=1}^K {w_k{\cal N}(\mu, \sigma_k^2)}$
+ * Denote $F_\xi(x)$ as its cumulative distribution function.
+ * When $x \ge \max_{k=1}^K{\mu_k}$ or $x \le \min_{k=1}^K{\mu_k}$
+ * $F_\xi\left(x\right)$ is guaranteed to be convex, so secant method is used.
+ * Otherwise, there is no guarantee on the convexity of $F_\xi\left(x\right)$
+ * when $\min_{k=1}^K{\mu_k} \le x \le \max_{k=1}^K{\mu_k}$.
+ * Hence, we need to use brent method to find the root at that time.
  */
 
 #include <config.h>
