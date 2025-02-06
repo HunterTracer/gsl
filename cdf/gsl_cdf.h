@@ -21,6 +21,7 @@
 
 #ifndef __GSL_CDF_H__
 #define __GSL_CDF_H__
+#include <stdlib.h>
 
 #undef __BEGIN_DECLS
 #undef __END_DECLS
